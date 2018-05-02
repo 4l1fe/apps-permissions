@@ -1,0 +1,50 @@
+version: '3'
+services:
+  web:
+    env_file:
+      - .env
+    environment:
+      - PORT=${WEB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+    build: .
+    ports:
+      - ${WEB_PORT}:${WEB_PORT}
+    links:
+      - mysql:${DB_HOST}
+    depends_on:
+      - mysql
+    volumes:
+      - static_data:${ICONS_DIR}
+
+  db_gen:
+    env_file:
+      - .env
+    environment:
+      - PORT=${WEB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+    build: .
+    entrypoint: /bin/bash -c "echo 'sleep $DB_GEN_SLEEP'
+                          && sleep $DB_GEN_SLEEP
+                          && echo 'woke up'
+                          && python3 db.py"
+    depends_on:
+      - mysql
+    links:
+      - mysql:${DB_HOST}
+
+  mysql:
+    image: mysql:5.5
+    env_file:
+      - .env
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_HOST=${MYSQL_ROOT_HOST}
+      - MYSQL_HOST=${MYSQL_HOST}
+    volumes:
+      - google_apps_data:/var/lib/mysql
+
+volumes:
+  google_apps_data:
+  static_data:
